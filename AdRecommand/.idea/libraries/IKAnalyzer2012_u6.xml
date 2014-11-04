@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="IKAnalyzer2012_u6">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/IKAnalyzer2012_u6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/mongo-1.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
