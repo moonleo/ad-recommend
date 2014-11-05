@@ -42,6 +42,9 @@ public class HierarchyGraph {
         }
     }
 
+    /**
+     * build the hierarchy graph
+     */
     public void buildHirarchyGraph() {
         String currentUrl;
         while(!queue.isEmpty()) {
@@ -53,7 +56,13 @@ public class HierarchyGraph {
         }
     }
 
+    /**
+     * get the web pages' source code based on the url
+     * @param url web url
+     * @return web pages' source code
+     */
     public Document getDocument(String url) {
+        //count the times of reconnection
         int reConnect = 0;
         Document doc = null;
         do {
@@ -76,6 +85,11 @@ public class HierarchyGraph {
         return null;
     }
 
+    /**
+     * parse the web page and get the tag<li> under tag<ul> which meet the demand
+     * @param doc assemble of the web pages
+     * @return the assemble of the tag<li>
+     */
     public Elements parseDucument(Document doc) {
         if(null != doc) {
             //select tag<ul class="directory dir-col">
@@ -89,20 +103,27 @@ public class HierarchyGraph {
         }
         return null;
     }
-    /*
-    parse the tag<li> and get the Chinese words
+
+    /**
+     * parse the tag<li> and get the Chinese words(category labels) and the
+     * url
+     * @param elements tag<li> elements
+     * @param currentURL current web url
      */
     public void parseElements(Elements elements, String currentURL) {
         if(elements != null) {
             StringBuilder sb;
-            //match Chinese words
+            //regular expression to match the Chinese words
             Pattern patternChinese = Pattern.compile("[\\u4e00-\\u9fa5]");
-            Matcher matcher;
+            //regular expression to match the url
+            Pattern patternURL = Pattern.compile("href=\"(?<url>[\\s\\S]*?)\"");
+            Matcher matcherChinese;
+            Matcher matcherUrl;
             for (Element e : elements) {
                 sb = new StringBuilder(currentURL);
-                matcher = patternChinese.matcher(e.toString());
-                while (matcher.find()) {
-                    sb.append(matcher.group());
+                matcherChinese = patternChinese.matcher(e.toString());
+                while (matcherChinese.find()) {
+                    sb.append(matcherChinese.group());
                 }
                 sb.append("/");
                 try {
