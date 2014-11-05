@@ -16,9 +16,8 @@ import java.util.regex.Pattern;
 
 public class HierarchyGraph {
     public static final int RETRY_TIME = 3;
-    static String initURL = "http://www.dmoz.org/World/Chinese_Simplified/";
     static String baseURL = "http://www.dmoz.org";
-    static Queue<String> queue = new LinkedList<String>();
+    static Queue<Category> queue = new LinkedList<Category>();
     static FileWriter fileWriter = null;
     static BufferedWriter bufferedWriter = null;
     static String filePath = "E:/IdeaProjects/drunken-bear/dmoz.txt";
@@ -28,9 +27,10 @@ public class HierarchyGraph {
             fileWriter = new FileWriter(filePath);
             bufferedWriter = new BufferedWriter(fileWriter);
             System.out.println("-----------start-----------");
-            queue.add(initURL);
-            HierarchyGraph testJsoup = new HierarchyGraph();
-            testJsoup.buildHierarchyGraph();
+            Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "Root");
+            queue.add(cat);
+            HierarchyGraph hierarchyGraph = new HierarchyGraph();
+            hierarchyGraph.buildHierarchyGraph();
         } catch (IOException e) {
             System.out.println("open file error!");
             e.printStackTrace();
@@ -55,7 +55,7 @@ public class HierarchyGraph {
         String currentUrl;
         while(!queue.isEmpty()) {
             //to obtain and remove the first element of the queue
-            currentUrl = queue.poll();
+            currentUrl = queue.poll().getUrl();
             Document doc = getDocument(currentUrl);
             Elements elements = parseDucument(doc);
             parseElements(elements);
@@ -117,59 +117,108 @@ public class HierarchyGraph {
      */
     public void parseElements(Elements elements) {
         if(elements != null) {
-            StringBuilder sb;
-            //regular expression to match the Chinese words
-            //Pattern patternChinese = Pattern.compile("[\\u4e00-\\u9fa5]");
             //regular expression to match the url
             Pattern patternURL = Pattern.compile("href=\"(?<url>[\\s\\S]*?)\"");
-            Matcher matcherChinese;
-            Matcher matcherUrl;
-            String hrefStr;
-            String[] arr;
-            String appendURL;
+            //regular expression to match the Chinese words
+            Pattern patternChinese = Pattern.compile("[\\u4e00-\\u9fa5]");
+
+            String label;
+            String url;
+            Category category;
             for (Element e : elements) {
-                sb = new StringBuilder(baseURL);
-                //match the url
-                matcherUrl = patternURL.matcher(e.toString());
-                if(matcherUrl.find()) {
-                    hrefStr = matcherUrl.group();
-                    arr = hrefStr.split("\"");
-                    try {
-                        //get the url and decode it
-                        appendURL = URLDecoder.decode(arr[1], "utf-8");
-                        sb.append(appendURL);
-                        //sb.append("/");
-                    } catch (UnsupportedEncodingException e1) {
-                        System.out.println("Unsupported encoding...");
-                        System.out.println("fail to  decode: "+arr[1]);
-                        e1.printStackTrace();
-                    }
-                    queue.add(sb.toString());
-                    try {
-                        bufferedWriter.write(sb.toString());
-                        bufferedWriter.write("\n\r");
-                    } catch (IOException e1) {
-                        System.out.println("write into file failed...");
-                        e1.printStackTrace();
-                    }
-                }
-
-                /*matcherChinese = patternChinese.matcher(e.toString());
-                while (matcherChinese.find()) {
-                    sb.append(matcherChinese.group());
-                }
-                sb.append("/");
-                try {
-                    //write the url into the file
-                    bufferedWriter.write(sb.toString());
-                    //write the line separator
-                    bufferedWriter.write("\n\r");
-                } catch (IOException e1) {
-                    System.out.println("write into file error!");
-                    e1.printStackTrace();
-                }*/
-
+                label = parseLabel(e, patternChinese);
+                url = parseUrl(e, patternURL);
+                category = new Category(url, label);
+                queue.add(category);
             }
+        }
+    }
+
+    /**
+     * use the regular expression to parse one Element in Elements to get the url
+     * @param element one Element in Elements
+     * @param pattern regular expression pattern
+     * @return url
+     */
+    public String parseUrl(Element element, Pattern pattern) {
+        StringBuilder stringBuilder = new StringBuilder(baseURL);
+        Matcher matcher = pattern.matcher(element.toString());
+        String result;
+        String[] arr;
+        while(matcher.find()) {
+            result = matcher.group();
+            arr = result.split("\"");
+            try {
+                stringBuilder.append(URLDecoder.decode(arr[1], "utf-8"));
+            } catch (UnsupportedEncodingException e) {
+                System.out.println("decode \""+result+"\" failed...unsupported encoding!");
+                e.printStackTrace();
+            }
+        }
+        //to validate the correctness, write url in file
+        try {
+            bufferedWriter.write("url: ");
+            bufferedWriter.write(stringBuilder.toString());
+            bufferedWriter.write(13);
+            bufferedWriter.write(10);
+        } catch (IOException e) {
+            System.out.println("wirte in file error...");
+            e.printStackTrace();
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     * use the regular expression to parse one Element in Elements to get the label
+     * @param element one Element in Elements
+     * @param pattern regular expression pattern
+     * @return label name
+     */
+    public String parseLabel(Element element, Pattern pattern) {
+        StringBuilder stringBuilder = new StringBuilder();
+        Matcher matcher = pattern.matcher(element.toString());
+        while(matcher.find()) {
+            stringBuilder.append(matcher.group());
+        }
+
+        //to validate the correctness, write url in file
+        try {
+            bufferedWriter.write("label: ");
+            bufferedWriter.write(stringBuilder.toString()+"----");
+        } catch (IOException e) {
+            System.out.println("write in file error...");
+            e.printStackTrace();
+        }
+        return stringBuilder.toString();
+    }
+
+    static class Category {
+        String url;
+        String label;
+
+        Category() {
+
+        }
+
+        Category(String url, String label) {
+            this.url = url;
+            this.label = label;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
         }
     }
 }
