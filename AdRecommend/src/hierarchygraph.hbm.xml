@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <hibernate-mapping>
-    <class name="" table="hierarchygraph">
+    <class name="db.bean.GraphNode" table="hierarchygraph">
         <id name="id" column="id" >
             <generator class="increment"/>
         </id>
         <property name="label" column="label" />
-        <property name="parents" type="" lazy="true" column="parents" />
-        <property name="children" type="" lazy="true" column="children" />
+        <property name="parents" type="db.bean.UserTypeList" lazy="true" column="parents" />
+        <property name="children" type="db.bean.UserTypeList" lazy="true" column="children" />
     </class>
 </hibernate-mapping>
