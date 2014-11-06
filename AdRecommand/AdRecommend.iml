@@ -12,6 +12,7 @@
     <orderEntry type="library" name="Jama-1.0.3" level="project" />
     <orderEntry type="library" name="libsvm" level="project" />
     <orderEntry type="library" name="jsoup-1.8.1" level="project" />
+    <orderEntry type="library" name="antlr-2.7.6" level="project" />
   </component>
 </module>
 
