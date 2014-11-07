@@ -3,6 +3,8 @@ package hierarchygraph;
 import db.bean.GraphNode;
 import db.dao.IGraphDAO;
 import db.dao.impl.GraphDAOImpl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,35 +23,16 @@ public class HierarchyGraph {
     public static final int RETRY_TIME = 3;
     static String baseURL = "http://www.dmoz.org";
     static Queue<Category> queue = new LinkedList<>();
-    static FileWriter fileWriter = null;
-    static BufferedWriter bufferedWriter = null;
-    static String filePath = "E:/IdeaProjects/drunken-bear/dmoz.txt";
     IGraphDAO graphDAO = new GraphDAOImpl();
+    static Log log = LogFactory.getLog(HierarchyGraph.class);
 
     public static void main(String[] args) {
-        try {
-            fileWriter = new FileWriter(filePath);
-            bufferedWriter = new BufferedWriter(fileWriter);
-            System.out.println("-----------start-----------");
-            Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "Root");
-            queue.add(cat);
-            HierarchyGraph hierarchyGraph = new HierarchyGraph();
-            hierarchyGraph.buildHierarchyGraph();
-        } catch (IOException e) {
-            System.out.println("open file error!");
-            e.printStackTrace();
-        } finally {
-            try {
-                fileWriter.flush();
-                bufferedWriter.flush();
-                bufferedWriter.close();
-                fileWriter.close();
-                System.out.println("-----------end-----------");
-            } catch (IOException e) {
-                System.out.println("close file error");
-                e.printStackTrace();
-            }
-        }
+        log.info("-----------------start------------------");
+        Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "Root");
+        queue.add(cat);
+        HierarchyGraph hierarchyGraph = new HierarchyGraph();
+        hierarchyGraph.buildHierarchyGraph();
+        log.info("-----------------end------------------");
     }
 
     /**
@@ -232,16 +215,8 @@ public class HierarchyGraph {
                 e.printStackTrace();
             }
         }
-        //to validate the correctness, write url in file
-        try {
-            bufferedWriter.write("url: ");
-            bufferedWriter.write(stringBuilder.toString());
-            bufferedWriter.write(13);
-            bufferedWriter.write(10);
-        } catch (IOException e) {
-            System.out.println("wirte in file error...");
-            e.printStackTrace();
-        }
+        //add the url to the log file
+        log.info(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -257,14 +232,8 @@ public class HierarchyGraph {
         while(matcher.find()) {
             stringBuilder.append(matcher.group());
         }
-        //to validate the correctness, write url in file
-        try {
-            bufferedWriter.write("label: ");
-            bufferedWriter.write(stringBuilder.toString()+"----");
-        } catch (IOException e) {
-            System.out.println("write in file error...");
-            e.printStackTrace();
-        }
+        //add the label to the log file
+        log.info(stringBuilder.toString()+"---");
         return stringBuilder.toString();
     }
 
