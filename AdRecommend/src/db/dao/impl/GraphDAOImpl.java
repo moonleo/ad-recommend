@@ -7,6 +7,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,7 +80,7 @@ public class GraphDAOImpl implements IGraphDAO {
         String hql = "from db.bean.GraphNode g where g.id=?";
         List<GraphNode> graphList = session.createQuery(hql)
                 .setParameter(0, id).list();
-        if(null != graphList)
+        if(graphList.size() != 0)
             return graphList.get(0);
         return null;
     }
@@ -90,8 +91,34 @@ public class GraphDAOImpl implements IGraphDAO {
         String hql = "from db.bean.GraphNode g where g.label=?";
         List<GraphNode> graphList = session.createQuery(hql)
                 .setParameter(0, label).list();
-        if(null != graphList)
+        if(graphList.size() != 0)
             return graphList.get(0);
         return null;
     }
+
+    /*@Override
+    public GraphNode getOrInsertGraphNodeByLabel(String label) {
+        session = HibernateUtil.getSession();
+        String hql = "from db.bean.GraphNode g where g.label=?";
+        List<GraphNode> graphList = session.createQuery(hql)
+                .setParameter(0, label).list();
+        if(graphList.size() != 0)
+            return graphList.get(0);
+        else {
+            GraphNode graphNode = new GraphNode(label);
+            insertGraphNode(graphNode);
+            return graphNode;
+        }
+    }*/
+
+    /*@Override
+    public int getIdByLabel(String label) {
+        GraphNode graphNode = getGraphNodeByLabel(label);
+        if(null == graphNode) {
+            GraphNode graphNode1 = new GraphNode(label, new ArrayList(), new ArrayList());
+            insertGraphNode(graphNode1);
+            return graphNode1.getId();
+        }
+        return graphNode.getId();
+    }*/
 }

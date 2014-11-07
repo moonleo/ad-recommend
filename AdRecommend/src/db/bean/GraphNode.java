@@ -14,6 +14,11 @@ public class GraphNode {
     public GraphNode() {
 
     }
+
+    public GraphNode(String label) {
+        this.label = label;
+    }
+
     public GraphNode(String label, List parents, List children) {
         this.label = label;
         this.parents = parents;

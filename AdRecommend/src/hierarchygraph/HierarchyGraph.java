@@ -1,5 +1,8 @@
 package hierarchygraph;
 
+import db.bean.GraphNode;
+import db.dao.IGraphDAO;
+import db.dao.impl.GraphDAOImpl;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,10 +20,11 @@ import java.util.regex.Pattern;
 public class HierarchyGraph {
     public static final int RETRY_TIME = 3;
     static String baseURL = "http://www.dmoz.org";
-    static Queue<Category> queue = new LinkedList<Category>();
+    static Queue<Category> queue = new LinkedList<>();
     static FileWriter fileWriter = null;
     static BufferedWriter bufferedWriter = null;
     static String filePath = "E:/IdeaProjects/drunken-bear/dmoz.txt";
+    IGraphDAO graphDAO = new GraphDAOImpl();
 
     public static void main(String[] args) {
         try {
@@ -52,13 +56,20 @@ public class HierarchyGraph {
      * build the hierarchy graph
      */
     public void buildHierarchyGraph() {
+        Category currentCatefory;
         String currentUrl;
+        String parentLabel;
         while(!queue.isEmpty()) {
             //to obtain and remove the first element of the queue
-            currentUrl = queue.poll().getUrl();
+            currentCatefory = queue.poll();
+            currentUrl = currentCatefory.getUrl();
+
+            parentLabel = currentCatefory.getLabel();
+            GraphNode graphNode= graphDAO.getGraphNodeByLabel(parentLabel);
+
             Document doc = getDocument(currentUrl);
             Elements elements = parseDucument(doc);
-            parseElements(elements);
+            parseElements(elements, graphNode);
         }
     }
 
@@ -115,7 +126,7 @@ public class HierarchyGraph {
      * url
      * @param elements tag<li> elements
      */
-    public void parseElements(Elements elements) {
+    public void parseElements(Elements elements, GraphNode parentGraphNode) {
         if(elements != null) {
             //regular expression to match the url
             Pattern patternURL = Pattern.compile("href=\"(?<url>[\\s\\S]*?)\"");
@@ -125,13 +136,79 @@ public class HierarchyGraph {
             String label;
             String url;
             Category category;
+            GraphNode graphNode;
             for (Element e : elements) {
                 label = parseLabel(e, patternChinese);
-                url = parseUrl(e, patternURL);
-                category = new Category(url, label);
-                queue.add(category);
+                if(!updateDB(parentGraphNode, label)) {
+                    url = parseUrl(e, patternURL);
+                    category = new Category(url, label);
+                    queue.add(category);
+                }
             }
         }
+    }
+
+    /**
+     * update the database bases on the hierarchical relationship
+     * @param parentGraphNode parent node
+     * @param label child node's label
+     * @return true when child node is in db, else false
+     */
+    public boolean updateDB(GraphNode parentGraphNode, String label) {
+        GraphNode graphNode = graphDAO.getGraphNodeByLabel(label);
+        boolean childExist = false;
+        GraphNode childGraphNode = null;
+        if(null == graphNode) {
+            childGraphNode = new GraphNode(label);
+            graphDAO.insertGraphNode(childGraphNode);
+        } else {
+            childExist = true;
+        }
+        int parentId = parentGraphNode.getId();
+        int childId = childGraphNode.getId();
+
+        updateParentNode(parentGraphNode, childId);
+        updateChildNode(childGraphNode, parentId);
+
+        return childExist;
+    }
+
+    /**
+     * update parent node's children list
+     * @param parentGraphNode parent node
+     * @param childId child node's id
+     */
+    public void updateParentNode(GraphNode parentGraphNode, int childId) {
+        List parentChildrenList = updateList(parentGraphNode.getChildren(), childId);
+        parentGraphNode.setChildren(parentChildrenList);
+        graphDAO.updateGraphNode(parentGraphNode);
+    }
+
+    /**
+     * update child node's parents list
+     * @param childGraphNode child node
+     * @param parentId parent node's id
+     */
+    public void updateChildNode(GraphNode childGraphNode, int parentId) {
+        List childParentsList = updateList(childGraphNode.getParents(), parentId);
+        childGraphNode.setParents(childParentsList);
+        graphDAO.updateGraphNode(childGraphNode);
+    }
+
+    /**
+     * add the id into the list
+     * @param list source list
+     * @param id number to add
+     * @return the list had added the id
+     */
+    public List updateList(List<String> list, int id) {
+        if(null != list) {
+            list.add(String.valueOf(id));
+        } else {
+            list = new ArrayList<>();
+            list.add(String.valueOf(id));
+        }
+        return list;
     }
 
     /**
@@ -180,7 +257,6 @@ public class HierarchyGraph {
         while(matcher.find()) {
             stringBuilder.append(matcher.group());
         }
-
         //to validate the correctness, write url in file
         try {
             bufferedWriter.write("label: ");

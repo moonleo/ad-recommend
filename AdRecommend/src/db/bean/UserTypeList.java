@@ -78,6 +78,8 @@ public class UserTypeList implements Serializable, UserType {
     }
 
     private String assemble(List list) {
+        if(list.size() == 0 || list == null)
+            return "";
         StringBuffer stringBuffer = new StringBuffer();
         for (int i = 0; i < list.size() - 1; i++) {
             stringBuffer.append(list.get(i)).append(SPLITTER);
@@ -90,6 +92,8 @@ public class UserTypeList implements Serializable, UserType {
     public Object deepCopy(Object o) throws HibernateException {
         List sourse = (List)o;
         List target = new ArrayList();
+        if(null == sourse)
+            return null;
         target.addAll(sourse);
         return target;
     }
