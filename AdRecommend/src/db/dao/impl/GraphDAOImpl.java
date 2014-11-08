@@ -96,29 +96,20 @@ public class GraphDAOImpl implements IGraphDAO {
         return null;
     }
 
-    /*@Override
-    public GraphNode getOrInsertGraphNodeByLabel(String label) {
-        session = HibernateUtil.getSession();
-        String hql = "from db.bean.GraphNode g where g.label=?";
-        List<GraphNode> graphList = session.createQuery(hql)
-                .setParameter(0, label).list();
-        if(graphList.size() != 0)
-            return graphList.get(0);
-        else {
-            GraphNode graphNode = new GraphNode(label);
-            insertGraphNode(graphNode);
-            return graphNode;
+    @Override
+    public void cleanTable() {
+        try {
+            session = HibernateUtil.getSession();
+            transaction = session.beginTransaction();
+            String hql = "delete db.bean.GraphNode";
+            session.createQuery(hql).executeUpdate();
+            transaction.commit();
+        } catch (HibernateException e) {
+            if(null != transaction)
+                transaction.rollback();
+            throw e;
+        } finally {
+            HibernateUtil.closeSession();
         }
-    }*/
-
-    /*@Override
-    public int getIdByLabel(String label) {
-        GraphNode graphNode = getGraphNodeByLabel(label);
-        if(null == graphNode) {
-            GraphNode graphNode1 = new GraphNode(label, new ArrayList(), new ArrayList());
-            insertGraphNode(graphNode1);
-            return graphNode1.getId();
-        }
-        return graphNode.getId();
-    }*/
+    }
 }

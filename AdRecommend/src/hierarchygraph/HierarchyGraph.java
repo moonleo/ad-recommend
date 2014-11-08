@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HierarchyGraph {
-    public static final int RETRY_TIME = 3;
+    public static final int RETRY_TIME = 5;
     static String baseURL = "http://www.dmoz.org";
     static Queue<Category> queue = new LinkedList<>();
     static IGraphDAO graphDAO = new GraphDAOImpl();
@@ -28,6 +28,8 @@ public class HierarchyGraph {
 
     public static void main(String[] args) {
         log.info("-----------------start------------------");
+        log.info("clean table: hierarchygraph");
+        graphDAO.cleanTable();
         log.info("add root node:");
         graphDAO.insertGraphNode(new GraphNode("root"));
         Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "root");
@@ -112,7 +114,6 @@ public class HierarchyGraph {
      */
     public void parseElements(Elements elements, GraphNode parentGraphNode) {
         if(elements != null) {
-
             String label;
             String url;
             Category category;

@@ -10,5 +10,6 @@ public interface IGraphDAO {
     public void updateGraphNode(GraphNode graphNode);
     public GraphNode getGraphNodeById(int id);
     public GraphNode getGraphNodeByLabel(String label);
+    public void cleanTable();
     /*public int getIdByLabel(String label);*/
 }
