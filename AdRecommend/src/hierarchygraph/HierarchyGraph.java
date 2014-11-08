@@ -23,12 +23,14 @@ public class HierarchyGraph {
     public static final int RETRY_TIME = 3;
     static String baseURL = "http://www.dmoz.org";
     static Queue<Category> queue = new LinkedList<>();
-    IGraphDAO graphDAO = new GraphDAOImpl();
+    static IGraphDAO graphDAO = new GraphDAOImpl();
     static Log log = LogFactory.getLog(HierarchyGraph.class);
 
     public static void main(String[] args) {
         log.info("-----------------start------------------");
-        Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "Root");
+        log.info("add root node:");
+        graphDAO.insertGraphNode(new GraphNode("root"));
+        Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "root");
         queue.add(cat);
         HierarchyGraph hierarchyGraph = new HierarchyGraph();
         hierarchyGraph.buildHierarchyGraph();
@@ -39,15 +41,15 @@ public class HierarchyGraph {
      * build the hierarchy graph
      */
     public void buildHierarchyGraph() {
-        Category currentCatefory;
+        Category currentCategory;
         String currentUrl;
         String parentLabel;
         while(!queue.isEmpty()) {
             //to obtain and remove the first element of the queue
-            currentCatefory = queue.poll();
-            currentUrl = currentCatefory.getUrl();
+            currentCategory = queue.poll();
+            currentUrl = currentCategory.getUrl();
 
-            parentLabel = currentCatefory.getLabel();
+            parentLabel = currentCategory.getLabel();
             GraphNode graphNode= graphDAO.getGraphNodeByLabel(parentLabel);
 
             Document doc = getDocument(currentUrl);
@@ -72,8 +74,7 @@ public class HierarchyGraph {
             } catch (IOException e) {
                 reConnect ++;
                 if(reConnect < RETRY_TIME) {
-                    System.out.println("Request timed out, try to reconnect... "+url);
-                    System.out.println("----the "+reConnect+" time(s)----");
+                    log.info("Request timed out, try to reconnect... " + url + " for the " + reConnect + " time(s)");
                     try {
                         Thread.sleep(3000);
                     } catch (InterruptedException e1) {
@@ -94,11 +95,11 @@ public class HierarchyGraph {
         if(null != doc) {
             //select tag<ul class="directory dir-col">
             Elements ulElements = doc.select("ul").select(".directory").select(".dir-col");
-            //select tag<li> which is belong to the <ul>
+            //select tag<a> which is belong to the <li>
             if (null != ulElements && !ulElements.isEmpty()) {
-                Elements liElements = ulElements.select("li");
-                if (null != liElements && !liElements.isEmpty())
-                    return liElements;
+                Elements aElements = ulElements.select("li").select("a");
+                if (null != aElements && !aElements.isEmpty())
+                    return aElements;
             }
         }
         return null;
@@ -111,19 +112,14 @@ public class HierarchyGraph {
      */
     public void parseElements(Elements elements, GraphNode parentGraphNode) {
         if(elements != null) {
-            //regular expression to match the url
-            Pattern patternURL = Pattern.compile("href=\"(?<url>[\\s\\S]*?)\"");
-            //regular expression to match the Chinese words
-            Pattern patternChinese = Pattern.compile("[\\u4e00-\\u9fa5]");
 
             String label;
             String url;
             Category category;
-            GraphNode graphNode;
             for (Element e : elements) {
-                label = parseLabel(e, patternChinese);
+                label = parseLabel(e);
                 if(!updateDB(parentGraphNode, label)) {
-                    url = parseUrl(e, patternURL);
+                    url = parseUrl(e);
                     category = new Category(url, label);
                     queue.add(category);
                 }
@@ -146,6 +142,7 @@ public class HierarchyGraph {
             graphDAO.insertGraphNode(childGraphNode);
         } else {
             childExist = true;
+            childGraphNode = graphNode;
         }
         int parentId = parentGraphNode.getId();
         int childId = childGraphNode.getId();
@@ -195,46 +192,35 @@ public class HierarchyGraph {
     }
 
     /**
-     * use the regular expression to parse one Element in Elements to get the url
+     * parse tag<a ...>...</a> for every Element to get the url
      * @param element one Element in Elements
-     * @param pattern regular expression pattern
      * @return url
      */
-    public String parseUrl(Element element, Pattern pattern) {
+    public String parseUrl(Element element) {
         StringBuilder stringBuilder = new StringBuilder(baseURL);
-        Matcher matcher = pattern.matcher(element.toString());
-        String result;
-        String[] arr;
-        while(matcher.find()) {
-            result = matcher.group();
-            arr = result.split("\"");
-            try {
-                stringBuilder.append(URLDecoder.decode(arr[1], "utf-8"));
-            } catch (UnsupportedEncodingException e) {
-                System.out.println("decode \""+result+"\" failed...unsupported encoding!");
-                e.printStackTrace();
-            }
+        String result = element.toString();
+        String[] arr = result.split("\"");
+        try {
+            stringBuilder.append(URLDecoder.decode(arr[1].trim(), "utf-8"));
+        } catch (UnsupportedEncodingException e) {
+            log.error("decode \"" + result + "\" failed...unsupported encoding!");
+            e.printStackTrace();
         }
         //add the url to the log file
-        log.info(stringBuilder.toString());
+        log.info("url: "+stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     /**
-     * use the regular expression to parse one Element in Elements to get the label
+     * parse tag<a ...>...</a> for every Element to get the label
      * @param element one Element in Elements
-     * @param pattern regular expression pattern
      * @return label name
      */
-    public String parseLabel(Element element, Pattern pattern) {
-        StringBuilder stringBuilder = new StringBuilder();
-        Matcher matcher = pattern.matcher(element.toString());
-        while(matcher.find()) {
-            stringBuilder.append(matcher.group());
-        }
+    public String parseLabel(Element element) {
+        String label = element.toString().replaceAll("<[^>]*>", "").trim();
         //add the label to the log file
-        log.info(stringBuilder.toString()+"---");
-        return stringBuilder.toString();
+        log.info("label: "+label);
+        return label;
     }
 
     static class Category {
