@@ -1,4 +1,4 @@
-package matrix;
+package classifyAlgorithm;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;

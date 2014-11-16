@@ -3,8 +3,10 @@ package test;
 import db.bean.GraphNode;
 import db.dao.IGraphDAO;
 import db.dao.impl.GraphDAOImpl;
+import hierarchygraph.HierarchyGraph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,6 +15,7 @@ import java.util.List;
 public class TestHibernateUtil {
     public static void main(String[] args) {
         IGraphDAO graphDAO = new GraphDAOImpl();
+        graphDAO.cleanTable();
         /*List list1 = new ArrayList();
         list1.add("1");
         list1.add("2");
@@ -26,7 +29,7 @@ public class TestHibernateUtil {
         graphDAO.insertGraphNode(graphNode);
         System.out.println("finish insert");*/
 
-        List list = graphDAO.getGraphNodes();
+        /*List list = graphDAO.getGraphNodes();
         for (int i = 0; i < list.size(); i++) {
             System.out.print("id:"+((GraphNode)list.get(i)).getId()+"\t");
             System.out.print("label:"+((GraphNode)list.get(i)).getLabel()+"\t");
@@ -38,6 +41,21 @@ public class TestHibernateUtil {
 
         GraphNode graphNode1 = graphDAO.getGraphNodeByLabel("testlabel");
         System.out.print("id:"+graphNode.getId()+"\t");
-        System.out.print("label:"+graphNode.getLabel()+"\t");
+        System.out.print("label:"+graphNode.getLabel()+"\t");*/
+
+        /*GraphNode graphNode = graphDAO.getGraphNodeByLabel("test3");
+        System.out.println(graphNode==null?null:graphNode.getId());*/
+        /*List<String> plist = new ArrayList<>();
+        plist.add("1");
+        plist.add("2");
+        plist.add("3");
+        graphNode.setParents(plist);
+        graphDAO.updateGraphNode(graphNode);
+        System.out.println(graphNode.getParents()==null?null:graphNode.getParents().size());*/
+        /*HierarchyGraph hierarchyGraph = new HierarchyGraph();
+        GraphNode graphNode = graphDAO.getGraphNodeByLabel("test2");
+        GraphNode graphNode1 = graphDAO.getGraphNodeByLabel("test");
+        //hierarchyGraph.updateParentNode(graphNode, 5);
+        hierarchyGraph.updateChildNode(graphNode1, 1);*/
     }
 }
