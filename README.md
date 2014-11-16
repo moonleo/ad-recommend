@@ -1,14 +1,27 @@
-Ad Recommend System -- Hierarchy Graph
-========
+# Ad Recommand System
+## 目录
+* [背景介绍](#背景介绍)
+* [项目介绍](#项目介绍)
+* [使用说明](#使用说明)
+  * [代码结构](#代码结构)
+  * [获取代码](#获取代码)
+* [其他](#其他)
+<a name="背景介绍"></a>
+## 背景介绍
 
-### classifyAlgorithm包：
- 分类算法
-
-### hierarchygraph包：
- 构建层次图(根据ODP)
-
-### db包：
- 进行数据库相关的操作
- 
-### test包：
- 测试
+    移动互联网的飞速发展为广告投放提供了一种新的应用模式,移动广告已成为移动互联网的主要赢利模式之一.基于用户的细分按需投放广告,是移动广告发展的必然趋势
+    
+<a name="项目介绍"></a>
+## 项目介绍
+    广告推荐系统的设计初衷是根据网页内容提供广告投放建议的系统，包括诸多模块，暂时只实现了层次图构建。
+<a name="使用说明"></a>
+## 使用说明
+<a name="代码结构"></a>
+### 代码结构
+    classifyAlgorithm包：分类算法<br>
+    hierarchygraph包：构建层次图(根据ODP)<br>
+    db包：进行数据库相关的操作<br>
+    test包：测试<br>
+<a name="获取代码"></a>
+### 获取代码
+    github项目主页: <http://moonleo.github.io/drunken-bear/>
