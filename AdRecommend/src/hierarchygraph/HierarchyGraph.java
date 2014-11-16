@@ -1,8 +1,11 @@
 package hierarchygraph;
 
 import db.bean.GraphNode;
+import db.bean.UrlItem;
 import db.dao.IGraphDAO;
+import db.dao.IUrlDAO;
 import db.dao.impl.GraphDAOImpl;
+import db.dao.impl.UrlDAOImpl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
@@ -10,33 +13,77 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class HierarchyGraph {
     public static final int RETRY_TIME = 5;
     static String baseURL = "http://www.dmoz.org";
     static Queue<Category> queue = new LinkedList<>();
     static IGraphDAO graphDAO = new GraphDAOImpl();
+    static IUrlDAO urlDAO = new UrlDAOImpl();
     static Log log = LogFactory.getLog(HierarchyGraph.class);
 
     public static void main(String[] args) {
-        log.info("-----------------start------------------");
-        log.info("clean table: hierarchygraph");
+        log.info("clean table: hierarchygraph/urllist");
         graphDAO.cleanTable();
-        log.info("add root node:");
-        graphDAO.insertGraphNode(new GraphNode("root"));
-        Category cat = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "root");
-        queue.add(cat);
+        urlDAO.cleanTable();
+        log.info("finished clean the table, add initial data...");
+        Category category = new Category("http://www.dmoz.org/World/Chinese_Simplified/", "Root");
+        GraphNode rootNode = new GraphNode("Root");
+        graphDAO.insertGraphNode(rootNode);
+        queue.add(category);
+        log.info("----------------begin-----------------");
         HierarchyGraph hierarchyGraph = new HierarchyGraph();
         hierarchyGraph.buildHierarchyGraph();
         log.info("-----------------end------------------");
+    }
+
+    public static void addInQueue() {
+        Category xiuxian = new Category("http://www.dmoz.org/World/Chinese_Simplified/休闲/", "休闲");
+        GraphNode xiuxianNode = new GraphNode("休闲"); graphDAO.insertGraphNode(xiuxianNode);
+        Category tiyu = new Category("http://www.dmoz.org/World/Chinese_Simplified/体育/", "体育");
+        GraphNode tiyuNode = new GraphNode("体育"); graphDAO.insertGraphNode(tiyuNode);
+        Category jiankang = new Category("http://www.dmoz.org/World/Chinese_Simplified/健康/", "健康");
+        GraphNode jiankangNode = new GraphNode("健康"); graphDAO.insertGraphNode(jiankangNode);
+        Category ertongyuqingshaonian = new Category("http://www.dmoz.org/Kids_and_Teens/International/Chinese_Simplified/", "儿童与青少年");
+        GraphNode ertongNode = new GraphNode("儿童与青少年"); graphDAO.insertGraphNode(ertongNode);
+        Category cankao = new Category("http://www.dmoz.org/World/Chinese_Simplified/参考/", "参考");
+        GraphNode cankaoNode = new GraphNode("参考"); graphDAO.insertGraphNode(cankaoNode);
+        Category shangye = new Category("http://www.dmoz.org/World/Chinese_Simplified/商业/", "商业");
+        GraphNode shangyeNode = new GraphNode("商业"); graphDAO.insertGraphNode(shangyeNode);
+        Category jiating = new Category("http://www.dmoz.org/World/Chinese_Simplified/家庭/", "家庭");
+        GraphNode jiatingNode = new GraphNode("家庭"); graphDAO.insertGraphNode(jiatingNode);
+        Category xinwen = new Category("http://www.dmoz.org/World/Chinese_Simplified/新闻", "新闻");
+        GraphNode xinwenNode = new GraphNode("新闻"); graphDAO.insertGraphNode(xinwenNode);
+        Category youxi = new Category("http://www.dmoz.org/World/Chinese_Simplified/游戏/", "游戏");
+        GraphNode youxiNode = new GraphNode("游戏"); graphDAO.insertGraphNode(youxiNode);
+        Category shehui = new Category("http://www.dmoz.org/World/Chinese_Simplified/社会/", "社会");
+        GraphNode shehuiNode = new GraphNode("社会"); graphDAO.insertGraphNode(shehuiNode);
+        Category kexue = new Category("http://www.dmoz.org/World/Chinese_Simplified/科学/", "科学");
+        GraphNode kexueNode = new GraphNode("科学"); graphDAO.insertGraphNode(kexueNode);
+        Category yishu = new Category("http://www.dmoz.org/World/Chinese_Simplified/艺术/", "艺术");
+        GraphNode yishuNode = new GraphNode("艺术"); graphDAO.insertGraphNode(yishuNode);
+        Category jisuanji = new Category("http://www.dmoz.org/World/Chinese_Simplified/计算机/", "计算机");
+        GraphNode jisuanjiNode = new GraphNode("计算机"); graphDAO.insertGraphNode(jisuanjiNode);
+        Category gouwu = new Category("http://www.dmoz.org/World/Chinese_Simplified/购物/", "购物");
+        GraphNode gouwuNode = new GraphNode("购物"); graphDAO.insertGraphNode(gouwuNode);
+        queue.add(xiuxian);
+        queue.add(tiyu);
+        queue.add(jiankang);
+        queue.add(ertongyuqingshaonian);
+        queue.add(cankao);
+        queue.add(shangye);
+        queue.add(jiating);
+        queue.add(xinwen);
+        queue.add(youxi);
+        queue.add(shehui);
+        queue.add(kexue);
+        queue.add(yishu);
+        queue.add(jisuanji);
+        queue.add(gouwu);
     }
 
     /**
@@ -47,7 +94,7 @@ public class HierarchyGraph {
         String currentUrl;
         String parentLabel;
         while(!queue.isEmpty()) {
-            //to obtain and remove the first element of the queue
+            //acquire and remove the first element of the queue
             currentCategory = queue.poll();
             currentUrl = currentCategory.getUrl();
 
@@ -56,6 +103,17 @@ public class HierarchyGraph {
 
             Document doc = getDocument(currentUrl);
             Elements elements = parseDucument(doc);
+
+            List websites = getWebsitesLink(doc);
+            if(null != websites) {
+                List list = graphNode.getWebsites();
+                if(null == list)
+                    list = new ArrayList();
+                list.addAll(websites);
+                graphNode.setWebsites(list);
+                graphDAO.updateGraphNode(graphNode);
+            }
+
             parseElements(elements, graphNode);
         }
     }
@@ -117,12 +175,18 @@ public class HierarchyGraph {
             String label;
             String url;
             Category category;
+            UrlItem urlItem;
             for (Element e : elements) {
                 label = parseLabel(e);
-                if(!updateDB(parentGraphNode, label)) {
+                if(!label.equals("地区")) {
+                    updateDB(parentGraphNode, label);
                     url = parseUrl(e);
-                    category = new Category(url, label);
-                    queue.add(category);
+                    if(null == urlDAO.getItemByUrl(url)) {
+                        urlItem = new UrlItem(url);
+                        urlDAO.insertUrl(urlItem);
+                        category = new Category(url, label);
+                        queue.add(category);
+                    }
                 }
             }
         }
@@ -134,15 +198,13 @@ public class HierarchyGraph {
      * @param label child node's label
      * @return true when child node is in db, else false
      */
-    public boolean updateDB(GraphNode parentGraphNode, String label) {
+    public void updateDB(GraphNode parentGraphNode, String label) {
         GraphNode graphNode = graphDAO.getGraphNodeByLabel(label);
-        boolean childExist = false;
         GraphNode childGraphNode = null;
         if(null == graphNode) {
             childGraphNode = new GraphNode(label);
             graphDAO.insertGraphNode(childGraphNode);
         } else {
-            childExist = true;
             childGraphNode = graphNode;
         }
         int parentId = parentGraphNode.getId();
@@ -150,12 +212,10 @@ public class HierarchyGraph {
 
         updateParentNode(parentGraphNode, childId);
         updateChildNode(childGraphNode, parentId);
-
-        return childExist;
     }
 
     /**
-     * update parent node's children list
+     * update parent node's children List
      * @param parentGraphNode parent node
      * @param childId child node's id
      */
@@ -166,7 +226,7 @@ public class HierarchyGraph {
     }
 
     /**
-     * update child node's parents list
+     * update child node's parents List
      * @param childGraphNode child node
      * @param parentId parent node's id
      */
@@ -177,8 +237,8 @@ public class HierarchyGraph {
     }
 
     /**
-     * add the id into the list
-     * @param list source list
+     * add the id into the List
+     * @param list source List
      * @param id number to add
      * @return the list had added the id
      */
@@ -224,13 +284,30 @@ public class HierarchyGraph {
         return label;
     }
 
+    public List getWebsitesLink(Document doc) {
+        List websites = null;
+        if(null != doc) {
+            Elements ulElements = doc.select("ul").select(".directory-url");
+            if(!ulElements.isEmpty()) {
+                websites = new ArrayList();
+                Elements liElements = ulElements.select("li");
+                Elements aElements = liElements.select("a").select(".listinglink");
+                for (Element e : aElements) {
+                    String eStr = e.toString();
+                    String[] arr = eStr.split("\"");
+                    String websiteUrl = arr[1];
+                    String websiteTitle = eStr.replaceAll("<[^>]*>", "").trim();
+                    String website = websiteTitle + "-" + websiteUrl;
+                    websites.add(website);
+                }
+            }
+        }
+        return websites;
+    }
+
     static class Category {
         String url;
         String label;
-
-        Category() {
-
-        }
 
         Category(String url, String label) {
             this.url = url;

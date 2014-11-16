@@ -10,13 +10,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class UserTypeList implements Serializable, UserType {
-    private List children;
-    private List parents;
-    private static final String SPLITTER= "/";
+    private static final String SPLITTER= ",";
     private static final int[] TYPES = new int[]{Types.VARCHAR};
 
     @Override
@@ -26,7 +23,7 @@ public class UserTypeList implements Serializable, UserType {
 
     @Override
     public Class returnedClass() {
-        return List.class;
+        return Set.class;
     }
 
     @Override
@@ -82,7 +79,7 @@ public class UserTypeList implements Serializable, UserType {
             return "";
         StringBuffer stringBuffer = new StringBuffer();
         for (int i = 0; i < list.size() - 1; i++) {
-            stringBuffer.append(list.get(i)).append(SPLITTER);
+            stringBuffer.append(list.get(i)+SPLITTER);
         }
         stringBuffer.append(list.get(list.size() - 1));
         return stringBuffer.toString();
@@ -90,11 +87,11 @@ public class UserTypeList implements Serializable, UserType {
 
     @Override
     public Object deepCopy(Object o) throws HibernateException {
-        List sourse = (List)o;
+        List source = (List)o;
         List target = new ArrayList();
-        if(null == sourse)
+        if(null == source)
             return null;
-        target.addAll(sourse);
+        target.addAll(source);
         return target;
     }
 

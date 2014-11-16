@@ -2,14 +2,12 @@ package db.bean;
 
 import java.util.List;
 
-/**
- * Created by LENOVO on 2014/11/6.
- */
 public class GraphNode {
     private int id;
     private String label;
     private List parents;
     private List children;
+    private List websites;
 
     public GraphNode() {
 
@@ -19,10 +17,16 @@ public class GraphNode {
         this.label = label;
     }
 
-    public GraphNode(String label, List parents, List children) {
+    public GraphNode(String label, List websites) {
+        this.label = label;
+        this.websites = websites;
+    }
+
+    public GraphNode(String label, List parents, List children, List websites) {
         this.label = label;
         this.parents = parents;
         this.children = children;
+        this.websites = websites;
     }
 
     public int getId() {
@@ -55,5 +59,13 @@ public class GraphNode {
 
     public void setChildren(List children) {
         this.children = children;
+    }
+
+    public List getWebsites() {
+        return websites;
+    }
+
+    public void setWebsites(List websites) {
+        this.websites = websites;
     }
 }
